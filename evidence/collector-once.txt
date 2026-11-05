@@ -1,0 +1,31 @@
+ Container monitoring-pipeline-collector-run-a1ba82b5d5d7 Creating 
+ Container monitoring-pipeline-collector-run-a1ba82b5d5d7 Created 
+
+Project: gitlab-org/gitlab-runner  (https://gitlab.com)  fetched 2026-11-05 18:21:08
+         ID  STATUS    SOURCE                DURATION  REF
+--------------------------------------------------------------------------------
+ 3033284114  running   push                         -  main
+ 3033201224  running   merge_request_event          -  refs/merge-requests/7796/train
+ 3033114895  success   duo_workflow               61s  refs/workloads/ed9119f5682
+ 3032942412  failed    push                     2489s  main
+ 3032887982  success   duo_workflow               73s  refs/workloads/76e4d97a2dc
+ 3032877408  success   merge_request_event      6310s  refs/merge-requests/7686/train
+ 3032873536  success   duo_workflow               81s  refs/workloads/1c36f4a91fe
+ 3032867701  running   merge_request_event          -  refs/merge-requests/7775/merge
+ 3032867500  success   duo_workflow              349s  refs/workloads/16dbd8be642
+ 3032801216  running   push                         -  v19.3.6
+ 3032800743  running   push                         -  v19.5.3
+ 3032798238  running   push                         -  v19.4.4
+ 3032624186  success   duo_workflow              181s  refs/workloads/bc03b0785bf
+ 3032618923  success   merge_request_event      6233s  refs/merge-requests/7646/merge
+ 3032618909  success   duo_workflow              684s  refs/workloads/14444f4a3ab
+ 3032544293  success   duo_workflow              204s  refs/workloads/e11c3653940
+ 3032502051  success   duo_workflow              821s  refs/workloads/0a936502ba0
+ 3032440941  success   push                       86s  19-4-stable
+ 3032440306  success   push                       76s  19-5-stable
+ 3032437457  success   push                       82s  19-3-stable
+--------------------------------------------------------------------------------
+Status counts: {'running': 6, 'success': 27, 'failed': 12, 'canceled': 5}
+Success ratio: 69.2%
+CSV: /app/data/pipelines.csv
+

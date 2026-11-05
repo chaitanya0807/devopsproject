@@ -1,0 +1,83 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  # Prometheus itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets:
+          - "prometheus:9090"
+
+  # Linux server metrics
+  - job_name: "node"
+    static_configs:
+      - targets:
+          - "node-exporter:9100"
+        labels:
+          server: "local-server"
+          environment: "local"
+
+  # CI/CD pipeline metrics from the GitLab collector
+  - job_name: "pipeline-collector"
+    static_configs:
+      - targets:
+          - "pipeline-collector:8000"
+
+  # --- Kubernetes (minikube) targets, exposed as NodePorts ---
+  # scripts/setup.sh rewrites the IP below if `minikube ip` changes.
+
+  # Sample application: every pod is discovered via the Kubernetes API and
+  # scraped through the API server proxy, so each pod is its own target.
+  - job_name: "sample-app"
+    scheme: https
+    tls_config: &k8s_tls
+      ca_file: /etc/prometheus/k8s/ca.crt
+    authorization: &k8s_auth
+      credentials_file: /etc/prometheus/k8s/token
+    kubernetes_sd_configs:
+      - role: pod
+        api_server: "https://192.168.49.2:8443"
+        namespaces:
+          names: ["demo-app"]
+        tls_config: *k8s_tls
+        authorization: *k8s_auth
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app, __meta_kubernetes_pod_phase]
+        regex: "sample-app;Running"
+        action: keep
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_name]
+        regex: "(.+);(.+)"
+        target_label: __metrics_path__
+        replacement: "/api/v1/namespaces/$1/pods/$2:8080/proxy/metrics"
+      - target_label: __address__
+        replacement: "192.168.49.2:8443"
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: instance
+
+  # Kubernetes object state: pods, deployments, nodes
+  - job_name: "kube-state-metrics"
+    honor_labels: true
+    static_configs:
+      - targets:
+          - "192.168.49.2:30880"
+
+  # Per-container CPU/memory/network for every pod
+  - job_name: "cadvisor"
+    static_configs:
+      - targets:
+          - "192.168.49.2:30881"
+    metric_relabel_configs:
+      - source_labels: [container_label_io_kubernetes_pod_namespace]
+        target_label: namespace
+      - source_labels: [container_label_io_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [container_label_io_kubernetes_container_name]
+        target_label: container
+      - regex: "container_label_io_kubernetes_.*"
+        action: labeldrop

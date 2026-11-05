@@ -1,0 +1,9 @@
+# Promtail ships every pod's stdout/stderr to Loki on the host machine.
+config:
+  clients:
+    - url: http://host.minikube.internal:3100/loki/api/v1/push
+      external_labels:
+        cluster: minikube
+resources:
+  requests: {cpu: 20m, memory: 32Mi}
+  limits: {cpu: 200m, memory: 128Mi}

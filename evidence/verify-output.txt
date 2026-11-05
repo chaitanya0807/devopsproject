@@ -1,0 +1,26 @@
+Verification run: 2026-11-05 23:50:22
+
+Kubernetes
+  [PASS] T01 minikube node Ready                          Ready
+  [PASS] T02 demo-app pods running                        3 pods running
+  [PASS] T03 monitoring pods running                      3 pods running
+  [PASS] T04 sample-app reachable (NodePort)              200
+
+Metrics (Prometheus)
+  [PASS] T05 all scrape targets up                        7/7 targets up 
+  [PASS] T06 node-exporter metrics                        1 series
+  [PASS] T07 kube-state-metrics                           85 series
+  [PASS] T08 cAdvisor per-pod metrics                     6 series
+  [PASS] T09 sample-app metrics per pod                   2 series
+  [PASS] T10 CI pipeline metrics                          4 series
+
+Logs (Loki)
+  [PASS] T11 Loki ready                                   200
+  [PASS] T12 sample-app logs in Loki                      100 log lines in last 10m
+
+Visualisation and CI collector
+  [PASS] T13 Grafana healthy                              200
+  [PASS] T14 collector /metrics                           200
+  [PASS] T15 pipeline CSV dataset written                 44 rows
+
+Result: 15 passed, 0 failed

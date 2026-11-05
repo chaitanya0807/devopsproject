@@ -1,0 +1,6 @@
+service:
+  type: NodePort
+  nodePort: 30880
+resources:
+  requests: {cpu: 20m, memory: 32Mi}
+  limits: {cpu: 100m, memory: 128Mi}

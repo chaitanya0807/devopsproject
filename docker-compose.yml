@@ -1,0 +1,91 @@
+services:
+
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/k8s:/etc/prometheus/k8s:ro   # API token + CA, written by scripts/setup.sh
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    depends_on:
+      - node-exporter
+    networks:
+      - monitoring
+      - minikube   # lets Prometheus reach the minikube NodePorts
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
+    networks:
+      - monitoring
+
+  loki:
+    image: grafana/loki:3.5.7
+    container_name: loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    command: ["-config.file=/etc/loki/config.yml"]
+    networks:
+      - monitoring
+
+  pipeline-collector:
+    build: ./pipeline-collector
+    image: pipeline-collector:1.0
+    container_name: pipeline-collector
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      GITLAB_URL: ${GITLAB_URL:-https://gitlab.com}
+      GITLAB_PROJECT_ID: ${GITLAB_PROJECT_ID:-gitlab-org/gitlab-runner}
+      GITLAB_TOKEN: ${GITLAB_TOKEN:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-300}
+    volumes:
+      - ./pipeline-collector/data:/app/data
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:13.2.1
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - monitoring
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+
+networks:
+  monitoring:
+    driver: bridge
+  minikube:
+    external: true

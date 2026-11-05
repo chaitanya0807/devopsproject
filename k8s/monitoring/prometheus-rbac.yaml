@@ -1,0 +1,44 @@
+# Read-only identity the host Prometheus uses to discover and scrape the
+# sample-app pods through the API server proxy (pod IPs are not routable from
+# the host, and scraping via the Service would mix counters across pods).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-external
+  namespace: demo-app
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-external
+  namespace: demo-app
+rules:
+  - apiGroups: [""]
+    resources: [pods, services, endpoints]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/proxy]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-external
+  namespace: demo-app
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-external
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-external
+    namespace: demo-app
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prometheus-external-token
+  namespace: demo-app
+  annotations:
+    kubernetes.io/service-account.name: prometheus-external
+type: kubernetes.io/service-account-token
