@@ -21,7 +21,7 @@ It is also the experimental testbed for the research work in [`docs/research-pro
 | `scripts/verify.sh` | 15 automated health checks, written to `evidence/verify-output.txt` |
 | `scripts/teardown.sh` | Stops everything but keeps the data |
 | `scripts/gen_dashboard.py` | Generates the Grafana dashboard JSON |
-| `docs/` | Architecture/workflow diagrams, testing, research proposal |
+| `docs/` | Architecture/workflow diagrams, testing, research proposal, Mid-sem report, **Setup-Guide.docx** (step-by-step install on a new machine) |
 | `evidence/` | Test outputs and screenshots |
 
 ## Prerequisites
