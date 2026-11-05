@@ -847,7 +847,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(app_http_requests_total[1m]))",
+          "expr": "sum(rate(app_http_requests_total{app=\"sample-app\"}[1m]))",
           "legendFormat": ""
         }
       ],
@@ -889,7 +889,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(app_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(app_http_requests_total[5m])) * 100",
+          "expr": "sum(rate(app_http_requests_total{app=\"sample-app\",status=~\"5..\"}[5m])) / sum(rate(app_http_requests_total{app=\"sample-app\"}[5m])) * 100",
           "legendFormat": ""
         }
       ],
@@ -951,7 +951,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket{app=\"sample-app\"}[5m])))",
           "legendFormat": ""
         }
       ],
@@ -1053,7 +1053,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (status) (rate(app_http_requests_total[1m]))",
+          "expr": "sum by (status) (rate(app_http_requests_total{app=\"sample-app\"}[1m]))",
           "legendFormat": "{{status}}"
         }
       ],
@@ -1086,7 +1086,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (pod) (rate(app_http_requests_total[1m]))",
+          "expr": "sum by (pod) (rate(app_http_requests_total{app=\"sample-app\"}[1m]))",
           "legendFormat": "{{pod}}"
         }
       ],
@@ -1119,7 +1119,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(app_http_request_duration_seconds_bucket{app=\"sample-app\"}[5m])))",
           "legendFormat": "p50"
         },
         {
@@ -1128,7 +1128,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket{app=\"sample-app\"}[5m])))",
           "legendFormat": "p95"
         },
         {
@@ -1137,7 +1137,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(app_http_request_duration_seconds_bucket{app=\"sample-app\"}[5m])))",
           "legendFormat": "p99"
         }
       ],

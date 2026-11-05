@@ -104,21 +104,21 @@ y += 7
 
 # ---------------- App ----------------
 row("Sample application (demo-app)")
-stat("Request rate", "sum(rate(app_http_requests_total[1m]))", 0, 6, "reqps")
-stat("Error rate", 'sum(rate(app_http_requests_total{status=~"5.."}[5m])) / sum(rate(app_http_requests_total[5m])) * 100',
+stat("Request rate", "sum(rate(app_http_requests_total{app=\"sample-app\"}[1m]))", 0, 6, "reqps")
+stat("Error rate", 'sum(rate(app_http_requests_total{app=\"sample-app\",status=~"5.."}[5m])) / sum(rate(app_http_requests_total{app=\"sample-app\"}[5m])) * 100',
      6, 6, "percent", thresholds((5, "orange"), (10, "red")))
-stat("p95 latency", "histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m])))",
+stat("p95 latency", "histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket{app=\"sample-app\"}[5m])))",
      12, 6, "s", thresholds((0.3, "orange"), (0.5, "red")))
 stat("Orders created (1h)", "sum(increase(app_orders_created_total[1h]))", 18, 6)
 y += 4
 panel("timeseries", "Requests by status",
-      [q("sum by (status) (rate(app_http_requests_total[1m]))", "{{status}}")], 0, 8, unit="reqps")
+      [q("sum by (status) (rate(app_http_requests_total{app=\"sample-app\"}[1m]))", "{{status}}")], 0, 8, unit="reqps")
 panel("timeseries", "Requests by pod",
-      [q("sum by (pod) (rate(app_http_requests_total[1m]))", "{{pod}}")], 8, 8, unit="reqps")
+      [q("sum by (pod) (rate(app_http_requests_total{app=\"sample-app\"}[1m]))", "{{pod}}")], 8, 8, unit="reqps")
 panel("timeseries", "Latency percentiles",
-      [q("histogram_quantile(0.50, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m])))", "p50"),
-       q("histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m])))", "p95"),
-       q("histogram_quantile(0.99, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m])))", "p99")],
+      [q("histogram_quantile(0.50, sum by (le) (rate(app_http_request_duration_seconds_bucket{app=\"sample-app\"}[5m])))", "p50"),
+       q("histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket{app=\"sample-app\"}[5m])))", "p95"),
+       q("histogram_quantile(0.99, sum by (le) (rate(app_http_request_duration_seconds_bucket{app=\"sample-app\"}[5m])))", "p99")],
       16, 8, unit="s")
 y += 7
 
@@ -144,11 +144,11 @@ y += 8
 # ---------------- Logs ----------------
 row("Logs (Loki)")
 panel("timeseries", "Log lines per second by level",
-      [{"expr": 'sum by (detected_level) (rate({namespace="demo-app", app="sample-app"}[1m]))',
+      [{"expr": 'sum by (detected_level) (rate({namespace="demo-app", app=\"sample-app\"}[1m]))',
         "legendFormat": "{{detected_level}}"}], 0, 24, 6, ds=LOKI)
 y += 6
 panel("logs", "sample-app logs (errors first: filter with the search box)",
-      [{"expr": '{namespace="demo-app", app="sample-app"}'}], 0, 24, 10, ds=LOKI,
+      [{"expr": '{namespace="demo-app", app=\"sample-app\"}'}], 0, 24, 10, ds=LOKI,
       opts={"showTime": True, "wrapLogMessage": True, "sortOrder": "Descending", "enableLogDetails": True})
 
 dash = {"uid": "mtech-system-monitoring", "title": "System Monitoring",

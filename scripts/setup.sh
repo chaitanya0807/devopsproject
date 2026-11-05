@@ -18,7 +18,7 @@ MINIKUBE_IP=$(minikube ip)
 echo "minikube IP: $MINIKUBE_IP"
 
 step "Building sample-app image inside minikube"
-minikube image build -t sample-app:1.0 k8s/app >/dev/null
+minikube image build -t sample-app:1.1 k8s/app >/dev/null
 
 step "Deploying sample app"
 kubectl apply -f k8s/app/sample-app.yaml

@@ -1,0 +1,57 @@
+# B1 baseline: standard static-threshold alerts, the way a typical team would
+# configure Prometheus. Thresholds follow common SRE / kube-prometheus defaults.
+# CAMSAC is compared against the firing times of these alerts (ALERTS series).
+groups:
+  - name: baseline-thresholds
+    interval: 15s
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(app_http_requests_total{app="sample-app",status=~"5.."}[2m]))
+            / sum(rate(app_http_requests_total{app="sample-app"}[2m])) > 0.05
+        for: 1m
+        labels: {severity: critical, baseline: b1}
+        annotations: {summary: "sample-app 5xx ratio above 5 %"}
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(app_http_request_duration_seconds_bucket{app="sample-app"}[2m]))) > 0.5
+        for: 1m
+        labels: {severity: warning, baseline: b1}
+        annotations: {summary: "sample-app p95 latency above 500 ms"}
+
+      - alert: HighCPUUsage
+        expr: |
+          max by (pod) (rate(container_cpu_usage_seconds_total{namespace="demo-app",container="sample-app"}[1m]))
+            / 0.25 > 0.8
+        for: 1m
+        labels: {severity: warning, baseline: b1}
+        annotations: {summary: "{{ $labels.pod }} CPU above 80 % of limit"}
+
+      - alert: HighMemoryUsage
+        expr: |
+          max by (pod) (container_memory_working_set_bytes{namespace="demo-app",container="sample-app"})
+            / (128 * 1024 * 1024) > 0.9
+        for: 30s
+        labels: {severity: warning, baseline: b1}
+        annotations: {summary: "{{ $labels.pod }} memory above 90 % of limit"}
+
+      - alert: PodRestarting
+        expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace="demo-app"}[5m])) > 0
+        labels: {severity: warning, baseline: b1}
+        annotations: {summary: "{{ $labels.pod }} restarted in the last 5 minutes"}
+
+      - alert: DeploymentReplicasMismatch
+        expr: |
+          kube_deployment_spec_replicas{namespace="demo-app"}
+            != kube_deployment_status_replicas_available{namespace="demo-app"}
+        for: 1m
+        labels: {severity: warning, baseline: b1}
+        annotations: {summary: "{{ $labels.deployment }} has unavailable replicas"}
+
+      - alert: TrafficDrop
+        expr: sum(rate(app_http_requests_total{app="sample-app"}[2m])) < 0.5
+        for: 1m
+        labels: {severity: warning, baseline: b1}
+        annotations: {summary: "sample-app traffic dropped below 0.5 req/s"}

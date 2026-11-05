@@ -19,15 +19,19 @@ spec:
     spec:
       containers:
         - name: sample-app
-          image: sample-app:1.0
+          image: sample-app:1.1
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
           env:
             - name: POD_NAME
               valueFrom: {fieldRef: {fieldPath: metadata.name}}
-            - name: ERROR_RATE
-              value: "0.05"
+            - {name: ROLE, value: orders}
+            - {name: VERSION, value: "1.0.0"}
+            - {name: ERROR_RATE, value: "0.02"}
+            - {name: BUGGY, value: "0"}
+            - {name: PAYMENTS_URL, value: "http://payments:8080"}
+            - {name: PAYMENT_TIMEOUT_MS, value: "1000"}
           resources:
             requests: {cpu: 50m, memory: 64Mi}
             limits: {cpu: 250m, memory: 128Mi}
@@ -38,6 +42,12 @@ spec:
             httpGet: {path: /healthz, port: 8080}
             initialDelaySeconds: 10
             periodSeconds: 20
+            timeoutSeconds: 3
+          volumeMounts:
+            - {name: state, mountPath: /state}
+      volumes:
+        - name: state   # survives container restarts; used by crash/leak fault flags
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -52,7 +62,52 @@ spec:
       targetPort: 8080
       nodePort: 30080
 ---
-# Generates steady traffic so dashboards and logs have data.
+# Downstream dependency of sample-app (same image, ROLE=payments).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments
+  namespace: demo-app
+  labels: {app: payments}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: payments}
+  template:
+    metadata:
+      labels: {app: payments}
+    spec:
+      containers:
+        - name: payments
+          image: sample-app:1.1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - {name: ROLE, value: payments}
+            - {name: ERROR_RATE, value: "0"}
+          resources:
+            requests: {cpu: 30m, memory: 48Mi}
+            limits: {cpu: 200m, memory: 96Mi}
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments
+  namespace: demo-app
+spec:
+  selector: {app: payments}
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# Deterministic load profile: alternates 60 s high load and 60 s low load,
+# so detectors have to cope with normal variation (experimental control).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -72,9 +127,9 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - while true; do
-                wget -q -O /dev/null http://sample-app:8080/api/orders;
-                wget -q -O /dev/null http://sample-app:8080/;
-                sleep 0.5;
+                if [ $(( $(date +%s) / 60 % 2 )) -eq 0 ]; then d=0.25; else d=0.8; fi;
+                wget -q -T 5 -O /dev/null http://sample-app:8080/api/orders 2>/dev/null;
+                sleep $d;
               done
           resources:
             requests: {cpu: 10m, memory: 8Mi}
